@@ -62,6 +62,15 @@ app.get('/audio-file', async (req, res) => {
             await downloadAudioFile(reqAudio.url, folder, quality, filename);
             const filePath = path.join(folder, `${filename}.mp3`);
             res.download(filePath);
+            res.on('finish', () => {
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error('Error deleting file:', err);
+                    } else {
+                        console.log('File deleted successfully');
+                    }
+                });
+            });
         } else {
             return res.status(404).send('Audio format not found');
         }
@@ -109,7 +118,19 @@ app.get('/video-file', async (req, res) => {
             const filename = `[${quality.toUpperCase()}]-${title}`;
             await downloadVideoFile(reqVideo.url, reqAudio.url, folder, quality, filename);
             const filePath = path.join(folder, `${filename}.mp4`);
+            // Stream the file for download
             res.download(filePath);
+
+            // Listen to the 'finish' event to delete the file after the download is complete
+            res.on('finish', () => {
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error('Error deleting file:', err);
+                    } else {
+                        console.log('File deleted successfully');
+                    }
+                });
+            });
         } else {
             return res.status(404).send('Video format not found');
         }
